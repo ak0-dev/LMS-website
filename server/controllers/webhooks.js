@@ -7,6 +7,7 @@ import Course from "../models/Course.js";
 //Api Controller function
 
 export const clerkWebhooks = async (req, res) => {
+    console.log("Stripe webhook received");
     try {
         const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET)
 

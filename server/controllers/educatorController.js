@@ -124,7 +124,7 @@ export const getEnrolledStudentsData = async(req,res)=>{
             courseTitle: purchase.courseId.courseTitle,
             purchaseDate:purchase.createdAt
         }));
-        res.json({sucess:true, enrolledStudents})
+        res.json({success:true, enrolledStudents})
 
     } catch (error) {
         res.json({ success: false, message: error.message })
