@@ -107,21 +107,21 @@ export const dummyTestimonial = [
         role: 'SWE 1 @ Amazon',
         image: assets.profile_img_1,
         rating: 5,
-        feedback: 'I\'ve been using Imagify for nearly two years, primarily for Instagram, and it has been incredibly user-friendly, making my work much easier.',
+        feedback: 'This course exceeded my expectations! The instructor explains every concept clearly, making even difficult topics easy to understand. The projects helped me build confidence, and I was able to apply my learning immediately.',
     },
     {
         name: 'Richard Nelson',
         role: 'SWE 2 @ Samsung',
         image: assets.profile_img_2,
         rating: 4,
-        feedback: 'I\'ve been using Imagify for nearly two years, primarily for Instagram, and it has been incredibly user-friendly, making my work much easier.',
+        feedback: 'One of the best online courses I\'ve taken. The lessons are well-structured, the examples are practical, and the quizzes reinforced my understanding. I would definitely recommend it to anyone starting their programming journey.',
     },
     {
         name: 'James Washington',
         role: 'SWE 2 @ Google',
         image: assets.profile_img_3,
         rating: 4.5,
-        feedback: 'I\'ve been using Imagify for nearly two years, primarily for Instagram, and it has been incredibly user-friendly, making my work much easier.',
+        feedback: 'I enrolled with very little experience, but by the end of the course I had built multiple real-world projects. The explanations are beginner-friendly, and the support from the instructor is excellent.',
     },
 ];
 
