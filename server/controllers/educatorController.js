@@ -3,6 +3,7 @@ import Course from '../models/Course.js';
 import { v2 as cloudinary } from 'cloudinary'
 import { Purchase } from '../models/Purchase.js';
 import User from '../models/User.js';
+import sanitizeHtml from 'sanitize-html';
 
 
 //update role to educator
@@ -44,6 +45,7 @@ export const addCourse = async (req, res) => {
             return res.json({ success: false, message: 'Thumbnail not attached' })
         }
         const parsedCourseData = await JSON.parse(courseData)
+        parsedCourseData.courseDescription = sanitizeHtml(parsedCourseData.courseDescription || '')
         parsedCourseData.educator = educatorId
         const newCourse = await Course.create(parsedCourseData)
         const imageUpload = await cloudinary.uploader.upload(imageFile.path);

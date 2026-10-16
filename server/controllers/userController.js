@@ -10,11 +10,11 @@ export const getUserData = async (req, res) => {
         const { userId } = await req.auth();
         const user = await User.findById(userId)
         if (!user) {
-            return res.json({ success: false, message: 'User not Found' })
+            return res.status(404).json({ success: false, message: 'User not Found' })
         }
         res.json({ success: true, user })
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
@@ -26,7 +26,7 @@ export const userEnrolledCourses = async (req, res) => {
 
         res.json({ success: true, enrolledCourses: userData.enrolledCourses })
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
@@ -39,7 +39,7 @@ export const purchaseCourse = async (req, res) => {
         const userData = await User.findById(userId)
         const courseData = await Course.findById(courseId)
         if (!userData || !courseData) {
-            return res.json({ success: false, message: 'Data not Found' })
+            return res.status(404).json({ success: false, message: 'Data not Found' })
         }
 
         const purchaseData = {
@@ -81,7 +81,7 @@ export const purchaseCourse = async (req, res) => {
         res.json({ success: true, session_url: session.url })
 
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
@@ -111,7 +111,7 @@ export const updateUserCourseprogress = async (req, res) => {
         res.json({ success: true, message: 'Progress Updated' })
 
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
@@ -125,7 +125,7 @@ export const getUserCourseProgress = async (req, res) => {
 
         res.json({success:true, progressData})
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.status(500).json({ success: false, message: error.message })
     }
 }
 
@@ -136,18 +136,18 @@ export const addUserRating  = async(req,res)=>{
     const { courseId, rating } = req.body
 
     if(!courseId || !userId || !rating || rating<1 || rating>5){
-        res.json({success:false, message: 'Invalid Details'});
+        return res.status(400).json({success:false, message: 'Invalid Details'});
     }
 
     try {
         const course = await Course.findById(courseId)
 
         if(!course){
-            res.json({success:false, message:'Course not Found'})
+            return res.status(404).json({success:false, message:'Course not Found'})
         }
         const user = await User.findById(userId);
         if(!user || !user.enrolledCourses.includes(courseId)){
-             res.json({success:false, message:'User has not purchased this course'})
+             return res.status(403).json({success:false, message:'User has not purchased this course'})
         }
         const existingRatingIndex = course.courseRatings.findIndex(r => r.userId === userId)
         if(existingRatingIndex>-1){
@@ -159,6 +159,6 @@ export const addUserRating  = async(req,res)=>{
         await course.save()
         return res.json({success:true, message: 'Rating added'})
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.status(500).json({ success: false, message: error.message })
     }
 }

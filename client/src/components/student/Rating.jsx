@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 const Rating = ({ initialRating, onRate }) => {
 
@@ -8,12 +8,6 @@ const Rating = ({ initialRating, onRate }) => {
     setRating(value);
     if (onRate) onRate(value);
   };
-
-  useEffect(() => {
-    if (initialRating) {
-      setRating(initialRating);
-    }
-  }, [initialRating]);
 
   return (
     <div className="flex gap-2">

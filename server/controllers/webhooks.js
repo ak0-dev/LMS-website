@@ -7,7 +7,6 @@ import Course from "../models/Course.js";
 //Api Controller function
 
 export const clerkWebhooks = async (req, res) => {
-    console.log("Stripe webhook received");
     try {
         const whook = new Webhook(process.env.CLERK_WEBHOOK_SECRET)
 
@@ -26,8 +25,8 @@ export const clerkWebhooks = async (req, res) => {
                     name: data.first_name + " " + data.last_name,
                     imageUrl: data.image_url,
                 }
-                await User.create(userData)
-                res.json({})
+                await User.findByIdAndUpdate(data.id, userData, { upsert: true, new: true, setDefaultsOnInsert: true })
+                res.json({ success: true })
                 break;
             }
             case 'user.updated': {
@@ -37,20 +36,21 @@ export const clerkWebhooks = async (req, res) => {
                     imageUrl: data.image_url,
                 }
                 await User.findByIdAndUpdate(data.id, userData)
-                res.json({})
+                res.json({ success: true })
                 break;
             }
             case 'user.deleted': {
                 await User.findByIdAndDelete(data.id)
-                res.json({})
+                res.json({ success: true })
                 break;
             }
 
             default:
+                res.json({ success: true, message: 'Event ignored' })
                 break;
         }
     } catch (error) {
-        res.json({ success: false, message: error.message })
+        res.status(400).json({ success: false, message: error.message })
     }
 }
 
@@ -65,7 +65,7 @@ export const stripeWebhooks = async (request, response) => {
         event = Stripe.webhooks.constructEvent(request.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     }
     catch (err) {
-        response.status(400).send(`Webhook Error: ${err.message}`);
+        return response.status(400).send(`Webhook Error: ${err.message}`);
     }
     switch (event.type) {
     case 'payment_intent.succeeded':{
@@ -76,15 +76,31 @@ export const stripeWebhooks = async (request, response) => {
         payment_intent: paymentIntentId
       })
 
-      const {purchaseId} = session.data[0].metadata;
+            const purchaseId = session.data[0]?.metadata?.purchaseId;
+            if (!purchaseId) {
+                return response.status(400).json({ success: false, message: 'Purchase metadata missing' });
+            }
 
       const purchaseData = await Purchase.findById(purchaseId)
+            if (!purchaseData) {
+                return response.status(404).json({ success: false, message: 'Purchase not found' });
+            }
+            if (purchaseData.status === 'completed') {
+                return response.json({ received: true });
+            }
       const userData = await User.findById(purchaseData.userId)
       const courseData = await Course.findById(purchaseData.courseId.toString())
+            if (!userData || !courseData) {
+                return response.status(404).json({ success: false, message: 'Enrollment data not found' });
+            }
 
-      courseData.enrolledStudents.push(userData)
-      await courseData.save()
-      userData.enrolledCourses.push(courseData._id)
+            if (!courseData.enrolledStudents.includes(userData._id)) {
+                courseData.enrolledStudents.push(userData._id)
+                await courseData.save()
+            }
+            if (!userData.enrolledCourses.some(courseId => courseId.toString() === courseData._id.toString())) {
+                userData.enrolledCourses.push(courseData._id)
+            }
       await userData.save()
 
       purchaseData.status = 'completed'
@@ -100,9 +116,15 @@ export const stripeWebhooks = async (request, response) => {
         payment_intent: paymentIntentId
       })
 
-      const {purchaseId} = session.data[0].metadata;
+            const purchaseId = session.data[0]?.metadata?.purchaseId;
+            if (!purchaseId) {
+                return response.status(400).json({ success: false, message: 'Purchase metadata missing' });
+            }
 
       const purchaseData = await Purchase.findById(purchaseId)
+            if (!purchaseData) {
+                return response.status(404).json({ success: false, message: 'Purchase not found' });
+            }
       purchaseData.status = 'failed'
       await purchaseData.save()
       
