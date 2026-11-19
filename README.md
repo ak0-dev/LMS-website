@@ -114,6 +114,7 @@ Authenticated user endpoints:
 
 - `GET /api/user/data`
 - `GET /api/user/enrolled-courses`
+- `GET /api/user/my-progress`
 - `POST /api/user/purchase`
 - `POST /api/user/update-course-progress`
 - `POST /api/user/get-course-progress`
@@ -123,6 +124,8 @@ Authenticated educator endpoints:
 
 - `GET /api/educator/update-role`
 - `POST /api/educator/add-course`
+- `PUT /api/educator/course/:id`
+- `DELETE /api/educator/course/:id`
 - `GET /api/educator/courses`
 - `GET /api/educator/dashboard`
 - `GET /api/educator/enrolled-students`
@@ -162,4 +165,3 @@ For production deployment:
 - Configure Clerk webhooks to call `/clerk`.
 - Configure Stripe webhooks to call `/stripe`.
 - Use production credentials and webhook signing secrets.
-

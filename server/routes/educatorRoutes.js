@@ -1,6 +1,6 @@
 import express from 'express'
 // import { requireAuth } from '@clerk/express'
-import { addCourse, educatorDashboardData, getEducatorCourses, getEnrolledStudentsData, updateRoleToEducator } from '../controllers/educatorController.js'
+import { addCourse, deleteCourse, educatorDashboardData, getEducatorCourses, getEnrolledStudentsData, updateCourse, updateRoleToEducator } from '../controllers/educatorController.js'
 import upload from '../configs/multer.js'
 import { protectEducator, protectUser } from '../middlewares/authMiddleware.js'
 
@@ -8,6 +8,8 @@ const educatorRouter  = express.Router()
 
 educatorRouter.get('/update-role', protectUser, updateRoleToEducator)
 educatorRouter.post('/add-course', upload.single('image'), protectEducator, addCourse)
+educatorRouter.put('/course/:id', upload.single('image'), protectEducator, updateCourse)
+educatorRouter.delete('/course/:id', protectEducator, deleteCourse)
 educatorRouter.get('/courses', protectEducator, getEducatorCourses)
 educatorRouter.get('/dashboard', protectEducator, educatorDashboardData)
 educatorRouter.get('/enrolled-students', protectEducator, getEnrolledStudentsData)
