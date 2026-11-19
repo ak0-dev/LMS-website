@@ -3,6 +3,7 @@ import { CourseProgress } from '../models/CourseProgress.js'
 import { Purchase } from '../models/Purchase.js'
 import User from '../models/User.js'
 import Stripe from 'stripe'
+import mongoose from 'mongoose'
 
 export const getUserData = async (req, res) => {
     try {
@@ -69,6 +70,29 @@ export const updateUserCourseprogress = async (req, res) => {
     try {
         const { userId } = await req.auth()
         const { courseId, lectureId } = req.body
+
+        if (!mongoose.Types.ObjectId.isValid(courseId)) {
+            return res.status(400).json({ success: false, message: 'Invalid course ID' })
+        }
+        if (typeof lectureId !== 'string' || !lectureId.trim()) {
+            return res.status(400).json({ success: false, message: 'Invalid lecture ID' })
+        }
+
+        const course = await Course.findById(courseId).select('courseContent enrolledStudents')
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Course not found' })
+        }
+        if (!course.enrolledStudents.some(id => id === userId)) {
+            return res.status(403).json({ success: false, message: 'You are not enrolled in this course' })
+        }
+
+        const lectureExists = course.courseContent.some(chapter =>
+            chapter.chapterContent.some(lecture => lecture.lectureId === lectureId)
+        )
+        if (!lectureExists) {
+            return res.status(400).json({ success: false, message: 'Lecture not found in this course' })
+        }
+
         const progressData = await CourseProgress.findOne({ userId, courseId })
         if (progressData) {
             if (progressData.lectureCompleted.includes(lectureId)) {

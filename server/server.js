@@ -19,7 +19,19 @@ await connectCloudinary()
 
 //Middlewares
 app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173'
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            process.env.CLIENT_URL,
+            'http://localhost:5173',
+            'http://127.0.0.1:5173'
+        ].filter(Boolean)
+
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true)
+        } else {
+            callback(new Error('Origin not allowed by CORS'))
+        }
+    }
 }))
 app.use(clerkMiddleware())
 
@@ -43,5 +55,4 @@ if (!process.env.VERCEL) {
 }
 
 export default app
-
 

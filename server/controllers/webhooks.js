@@ -56,6 +56,35 @@ export const clerkWebhooks = async (req, res) => {
 
 const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY)
 
+const completePurchaseEnrollment = async (purchaseId) => {
+    const purchaseData = await Purchase.findById(purchaseId)
+    if (!purchaseData) {
+        return { status: 404, message: 'Purchase not found' }
+    }
+    if (purchaseData.status === 'completed') {
+        return { status: 200, duplicate: true }
+    }
+
+    const userData = await User.findById(purchaseData.userId)
+    const courseData = await Course.findById(purchaseData.courseId)
+    if (!userData || !courseData) {
+        return { status: 404, message: 'Enrollment data not found' }
+    }
+
+    if (!courseData.enrolledStudents.some(id => id === userData._id)) {
+        courseData.enrolledStudents.push(userData._id)
+        await courseData.save()
+    }
+    if (!userData.enrolledCourses.some(id => id.toString() === courseData._id.toString())) {
+        userData.enrolledCourses.push(courseData._id)
+        await userData.save()
+    }
+
+    purchaseData.status = 'completed'
+    await purchaseData.save()
+    return { status: 200, duplicate: false }
+}
+
 export const stripeWebhooks = async (request, response) => {
     const sig = request.headers['stripe-signature'];
 
@@ -68,6 +97,37 @@ export const stripeWebhooks = async (request, response) => {
         return response.status(400).send(`Webhook Error: ${err.message}`);
     }
     switch (event.type) {
+    case 'checkout.session.completed': {
+        const session = event.data.object
+        if (session.payment_status !== 'paid') {
+            return response.status(200).json({ received: true })
+        }
+        const purchaseId = session.metadata?.purchaseId
+        if (!purchaseId) {
+            return response.status(400).json({ success: false, message: 'Purchase metadata missing' })
+        }
+        const result = await completePurchaseEnrollment(purchaseId)
+        if (result.status !== 200) {
+            return response.status(result.status).json({ success: false, message: result.message })
+        }
+        break
+    }
+    case 'checkout.session.async_payment_failed': {
+        const session = event.data.object
+        const purchaseId = session.metadata?.purchaseId
+        if (!purchaseId) {
+            return response.status(400).json({ success: false, message: 'Purchase metadata missing' })
+        }
+        const purchaseData = await Purchase.findById(purchaseId)
+        if (!purchaseData) {
+            return response.status(404).json({ success: false, message: 'Purchase not found' })
+        }
+        if (purchaseData.status !== 'completed') {
+            purchaseData.status = 'failed'
+            await purchaseData.save()
+        }
+        break
+    }
     case 'payment_intent.succeeded':{
       const paymentIntent = event.data.object;
       const paymentIntentId = paymentIntent.id
